@@ -229,6 +229,9 @@ def cube_map_cleanup(scene):
     """
     remove all the temporary data created for the cube map
     """
+    if not scene.cube_map.use_cube_map:
+        return
+
     bpy.cube_map_node_tree_data.cleanupScene()
     del bpy.cube_map_node_tree_data
     del bpy.cube_map_views
