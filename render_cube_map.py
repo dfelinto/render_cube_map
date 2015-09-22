@@ -42,6 +42,44 @@ bl_info = {
 
 
 import bpy
+from bpy.app.handlers import persistent
+
+TODO = True
+
+
+# ############################################################
+# Callbacks
+# ############################################################
+
+@persistent
+def cube_map_render_init(context):
+    print('cube_map_render_init')
+    TODO
+
+
+@persistent
+def cube_map_render_pre(context):
+    print('cube_map_render_pre')
+    TODO
+
+
+@persistent
+def cube_map_render_post(context):
+    print('cube_map_render_post')
+    TODO
+
+
+@persistent
+def cube_map_render_cancel(context):
+    print('cube_map_render_cancel')
+    TODO
+
+
+@persistent
+def cube_map_render_complete(context):
+    print('cube_map_render_complete')
+    TODO
+
 
 # ############################################################
 # User Interface
@@ -61,12 +99,24 @@ def register():
             default=False,
             )
 
+    bpy.app.handlers.render_init.append(cube_map_render_init)
+    bpy.app.handlers.render_pre.append(cube_map_render_pre)
+    bpy.app.handlers.render_post.append(cube_map_render_post)
+    bpy.app.handlers.render_cancel.append(cube_map_render_cancel)
+    bpy.app.handlers.render_complete.append(cube_map_render_complete)
+
     bpy.types.RENDER_PT_render.append(RENDER_PT_cube_map)
 
 
 def unregister():
     bpy.types.RENDER_PT_render.remove(RENDER_PT_cube_map)
     del bpy.types.Scene.user_cube_map
+
+    bpy.app.handlers.render_init.remove(cube_map_render_init)
+    bpy.app.handlers.render_pre.remove(cube_map_render_pre)
+    bpy.app.handlers.render_post.remove(cube_map_render_post)
+    bpy.app.handlers.render_cancel.remove(cube_map_render_cancel)
+    bpy.app.handlers.render_complete.remove(cube_map_render_complete)
 
 
 if __name__ == '__main__':
