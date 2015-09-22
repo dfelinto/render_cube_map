@@ -51,6 +51,74 @@ TODO = True
 # Callbacks
 # ############################################################
 
+class NodeTree:
+    def __init__(self, scene):
+        self._use_nodes = scene.use_nodes
+        self._use_compositing = scene.render.use_compositing
+
+        self._nodes_mute = {}
+        self._scene = scene
+
+        self._scene.render.use_compositing = True
+
+        if not self._use_nodes:
+            scene.use_nodes = True
+            self._muteNodes()
+        else:
+            self._storeNodes()
+            self._muteNodes()
+
+    def _storeNodes(self):
+        """
+        store the existent nodes and if they are muted
+        """
+        nodes = self._scene.node_tree.nodes
+        for node in nodes:
+            self._nodes_mute[hash(node)] = node.mute
+
+    def _muteNodes(self):
+        """
+        mute all the existent nodes
+        """
+        nodes = self._scene.node_tree.nodes
+        for node in nodes:
+            node.mute = True
+
+    def cleanupScene(self):
+        """
+        remove all the new nodes, and unmute original ones
+        """
+        scene = self._scene
+        scene.use_nodes = self._use_nodes
+        scene.render.use_compositing = self._use_compositing
+
+        self._cleanNodes()
+        self._unMuteNodes()
+
+    def _cleanNodes(self):
+        """
+        remote all the nodes created temporarily
+        """
+        nodes = self._scene.node_tree.nodes
+        to_del = []
+        keys = self._nodes_mute.keys()
+
+        for node in nodes:
+            if hash(node) not in keys:
+                to_del.append(node)
+
+        for node in to_del:
+            nodes.remove(node)
+
+    def _unMuteNodes(self):
+        """
+        unmute all the existent nodes
+        """
+        nodes = self._scene.node_tree.nodes
+        for node in nodes:
+            node.mute = self._nodes_mute[hash(node)]
+
+
 class View:
     def __init__(self, name):
         self._name = name
@@ -68,6 +136,8 @@ class View:
         node.scene = self._scene
         self._node = node
 
+        TODO # if there were nodetrees, duplicate them here
+
         # connect to output
         _input = node_output.layer_slots.new(self._name)
         links.new(node.outputs[0], _input)
@@ -79,7 +149,9 @@ class View:
 
 @persistent
 def cube_map_render_init(scene):
-    print('cube_map_render_init')
+    """
+    setup the cube map settings for all the render frames
+    """
 
     if not scene.cube_map.use_cube_map:
         return
@@ -96,9 +168,6 @@ def cube_map_render_init(scene):
             View('NADIR'),
             ]
 
-    # create cameras
-    TODO
-
     for view in views:
         # create a scene per view
         bpy.ops.scene.new(type='LINK_OBJECTS')
@@ -111,16 +180,10 @@ def cube_map_render_init(scene):
         view.setScene(scene)
 
     # create a scene from scratch
-    cubemap_scene = bpy.data.scenes.new('Cube Map')
-    cubemap_scene.cube_map.is_temporary = True
+    node_tree_data = NodeTree(main_scene)
 
     # created the necessary nodetrees there
-    cubemap_scene.use_nodes = True
-    node_tree = cubemap_scene.node_tree
-
-    # remove all nodes
-    for node in node_tree.nodes:
-        node_tree.nodes.remove(node)
+    node_tree = main_scene.node_tree
 
     # output node
     node_output = node_tree.nodes.new('CompositorNodeOutputFile')
@@ -130,21 +193,61 @@ def cube_map_render_init(scene):
         node = node_tree.nodes.new('CompositorNodeRLayers')
         view.setNode(node, node_tree.links, node_output)
 
+    # globals
+    bpy.cube_map_node_tree_data = node_tree_data
+    bpy.cube_map_views = views
+
+
+# ############################################################
+# Cameras Setup
+# ############################################################
+
+@persistent
+def cube_map_render_pre(scene):
+    TODO # create cameras
+
+
+@persistent
+def cube_map_render_pre(scene):
+    TODO # delete cameras
+
+# ############################################################
+# Clean-Up
+# ############################################################
 
 @persistent
 def cube_map_render_cancel(scene):
-    print('cube_map_render_cancel')
     cube_map_cleanup(scene)
 
 
 @persistent
 def cube_map_render_complete(scene):
-    print('cube_map_render_complete')
     cube_map_cleanup(scene)
 
 
 def cube_map_cleanup(scene):
-    TODO
+    """
+    remove all the temporary data created for the cube map
+    """
+    bpy.cube_map_node_tree_data.cleanupScene()
+    del bpy.cube_map_node_tree_data
+    del bpy.cube_map_views
+
+    bpy.app.handlers.scene_update_post.append(cube_map_post_update_cleanup)
+
+
+def cube_map_post_update_cleanup(scene):
+    """
+    delay removal of scenes (otherwise we get a crash)
+    """
+
+    scenes_temp = [scene for scene in bpy.data.scenes if scene.cube_map.is_temporary]
+
+    if not scenes_temp:
+        bpy.app.handlers.scene_update_post.remove(cube_map_post_update_cleanup)
+
+    else:
+        bpy.data.scenes.remove(scenes_temp[0])
 
 
 # ############################################################
