@@ -231,6 +231,9 @@ def cube_map_render_init(scene):
 
 @persistent
 def cube_map_render_pre(scene):
+    if not scene.cube_map.use_cube_map:
+        return
+
     from math import radians
 
     camera = scene.camera
@@ -254,6 +257,9 @@ def cube_map_render_pre(scene):
 
 @persistent
 def cube_map_render_post(scene):
+    if not scene.cube_map.use_cube_map:
+        return
+
     views = bpy.cube_map_views
 
     for view in views:
