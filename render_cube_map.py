@@ -44,8 +44,6 @@ bl_info = {
 import bpy
 from bpy.app.handlers import persistent
 
-TODO = True
-
 
 # ############################################################
 # Callbacks
@@ -120,11 +118,13 @@ class NodeTree:
 
 
 class View:
-    def __init__(self, name):
+    def __init__(self, name, euler_rotation):
         self._name = name
         self._scene = None
+        self._scene_camera = None
         self._node = None
         self._camera = None
+        self._euler_rotation = euler_rotation
 
     def setScene(self, scene):
         scene.name = self._name
@@ -136,15 +136,39 @@ class View:
         node.scene = self._scene
         self._node = node
 
-        TODO # if there were nodetrees, duplicate them here
+        # TODO if there were nodetrees, duplicate them here
 
         # connect to output
         _input = node_output.layer_slots.new(self._name)
         links.new(node.outputs[0], _input)
 
+    def setCamera(self, data, loc, zed):
+        self._scene_camera = self._scene.camera
+
+        self._camera = bpy.data.objects.new(self._name, data)
+        self._scene.objects.link(self._camera)
+
+        rotation = self._euler_rotation.copy()
+        rotation.z += zed
+
+        self._camera.rotation_euler = rotation
+        self._camera.location = loc
+
+        # change scene camera
+        self._scene.camera = self._camera
+
+    def resetCamera(self):
+        self._scene.objects.unlink(self._camera)
+        bpy.data.objects.remove(self._camera)
+        self._camera = None
+
     @property
     def scene(self):
         return self._scene
+
+    @property
+    def name(self):
+        return self._name
 
 
 @persistent
@@ -152,6 +176,9 @@ def cube_map_render_init(scene):
     """
     setup the cube map settings for all the render frames
     """
+    from mathutils import Euler
+    from math import pi
+    half_pi = pi * 0.5
 
     if not scene.cube_map.use_cube_map:
         return
@@ -160,12 +187,12 @@ def cube_map_render_init(scene):
     hashes = [hash(scene) for scene in bpy.data.scenes]
 
     views = [
-            View('NORTH'),
-            View('SOUTH'),
-            View('WEST'),
-            View('EAST'),
-            View('ZENITH'),
-            View('NADIR'),
+            View('NORTH',  Euler((half_pi, 0.0,  0.0))),
+            View('SOUTH',  Euler((half_pi, 0.0, pi))),
+            View('WEST',   Euler((half_pi, 0.0, half_pi))),
+            View('EAST',   Euler((half_pi, 0.0, -half_pi))),
+            View('ZENITH', Euler((pi, 0.0, 0.0))),
+            View('NADIR',  Euler((0.0, 0.0, 0.0))),
             ]
 
     for view in views:
@@ -204,12 +231,34 @@ def cube_map_render_init(scene):
 
 @persistent
 def cube_map_render_pre(scene):
-    TODO # create cameras
+    from math import radians
+
+    camera = scene.camera
+    data = camera.data.copy()
+
+    data.lens_unit = 'FOV'
+    data.angle = radians(90)
+    data.type='PERSP'
+
+    mat = camera.matrix_world
+
+    loc = mat.to_translation()
+    rot = mat.to_euler()
+    zed = rot.z
+
+    views = bpy.cube_map_views
+
+    for view in views:
+        view.setCamera(data, loc, zed)
 
 
 @persistent
-def cube_map_render_pre(scene):
-    TODO # delete cameras
+def cube_map_render_post(scene):
+    views = bpy.cube_map_views
+
+    for view in views:
+        view.resetCamera()
+
 
 # ############################################################
 # Clean-Up
@@ -243,7 +292,6 @@ def cube_map_post_update_cleanup(scene):
     """
     delay removal of scenes (otherwise we get a crash)
     """
-
     scenes_temp = [scene for scene in bpy.data.scenes if scene.cube_map.is_temporary]
 
     if not scenes_temp:
@@ -291,6 +339,8 @@ def register():
             )
 
     bpy.app.handlers.render_init.append(cube_map_render_init)
+    bpy.app.handlers.render_pre.append(cube_map_render_pre)
+    bpy.app.handlers.render_post.append(cube_map_render_post)
     bpy.app.handlers.render_cancel.append(cube_map_render_cancel)
     bpy.app.handlers.render_complete.append(cube_map_render_complete)
 
@@ -305,6 +355,8 @@ def unregister():
     bpy.utils.unregister_class(HashInfo)
 
     bpy.app.handlers.render_init.remove(cube_map_render_init)
+    bpy.app.handlers.render_pre.remove(cube_map_render_pre)
+    bpy.app.handlers.render_post.remove(cube_map_render_post)
     bpy.app.handlers.render_cancel.remove(cube_map_render_cancel)
     bpy.app.handlers.render_complete.remove(cube_map_render_complete)
 
