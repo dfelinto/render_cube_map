@@ -11,8 +11,19 @@ How to Use
 
 Each face of the cube map is saved separately in your output folder.
 
-Design Considerations
-=====================
-Since this was originally designed to generated VR Cube Maps (with my [Spherical Stereo](http://www.dalaifelinto.com/?p=1009) Blender branch), the cube map is always upward. In other words, the Z rotation of the camera is taken into consideration, but the ``NORTH``, ``WEST``, ``EAST``, ``SOUTH`` faces are all upward oriented.
+What is happening under the hood?
+=================================
+The addon automatize the following tasks:
+* Create 6 linked scenes (``NORTH``, ``WEST``, ``EAST``, ``SOUTH``, ``ZENITH``, ``NADIR``)
+* Create a nodetree with a ``Render Layer`` node per scene, all connected to a ``File Output`` node
+* Create a unique camera for each new scene, with a field of view of 90 degrees, and facing a different direction
+* Render your frame/animation
+* Delete everything created by the Addon
 
-Also, the composite nodes are not taken into consideration at the moment.
+Design Limitations
+==================
+Since this was originally designed to generated VR Cube Maps (with the [Spherical Stereo](http://www.dalaifelinto.com/?p=1009) Blender branch), the cube map is always upward.
+
+In other words, the Z rotation of the camera is taken into consideration, but the ``NORTH``, ``WEST``, ``EAST``, ``SOUTH`` faces are all upward oriented.
+
+Besides that, the composite nodes are not taken into consideration at the moment.
