@@ -306,13 +306,101 @@ def cube_map_post_update_cleanup(scene):
     else:
         bpy.data.scenes.remove(scenes_temp[0])
 
+# ############################################################
+# Setup Operator
+# ############################################################
+
+class CubeMapSetup(bpy.types.Operator):
+    """"""
+    bl_idname = "render.cube_map_setup"
+    bl_label = "Cube Map Render Setup"
+    bl_description = ""
+
+    action = bpy.props.EnumProperty(
+        description="",
+        items=(("SETUP", "Setup", "Created linked scenes and setup cube map"),
+               ("RESET", "Reset", "Delete added scenes"),
+               ),
+        default="SETUP",
+        options={'SKIP_SAVE'},
+        )
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def setup(self, window, scene):
+        cube_map = scene.cube_map
+        cube_map.is_enabled = True
+
+        use_cube_map = cube_map.use_cube_map
+        cube_map.use_cube_map = True
+
+        cube_map_render_init(scene)
+        cube_map_render_pre(scene)
+
+        cube_map.use_cube_map = use_cube_map
+        window.screen.scene = scene
+
+    def reset(self, scene):
+        cube_map = scene.cube_map
+        cube_map.is_enabled = False
+
+        use_cube_map = cube_map.use_cube_map
+        cube_map.use_cube_map = True
+
+        cube_map_render_post(scene)
+        cube_map_cleanup(scene)
+
+        cube_map.use_cube_map = use_cube_map
+
+    def invoke(self, context, event):
+        scene = context.scene
+        cube_map = scene.cube_map
+
+        is_enabled = cube_map.is_enabled
+
+        if self.action == 'RESET':
+            self.report({'ERROR'}, "Option temporarilly disabled")
+            return {'CANCELLED'}
+
+            if is_enabled:
+                if cube_map.is_temporary:
+                    self.report({'ERROR'}, "Cannot reset cube map from one of the created scenes")
+                    return {'CANCELLED'}
+                else:
+                    self.reset(scene)
+                    return {'FINISHED'}
+            else:
+                self.report({'ERROR'}, "Cube Map render is not setup")
+                return {'CANCELLED'}
+
+        else: # SETUP
+            if is_enabled:
+                self.report({'ERROR'}, "Cube Map render is already setup")
+                return {'CANCELLED'}
+            else:
+                self.setup(context.window, scene)
+                return {'FINISHED'}
+
 
 # ############################################################
 # User Interface
 # ############################################################
 
 def RENDER_PT_cube_map(self, context):
-    self.layout.prop(context.scene.cube_map, "use_cube_map")
+    scene = context.scene
+    cube_map = scene.cube_map
+
+    col = self.layout.column()
+
+    col.prop(scene.cube_map, "use_cube_map")
+    col.separator()
+
+    if not cube_map.is_enabled:
+        col.operator("render.cube_map_setup", text="Cube Map Setup").action='SETUP'
+    else:
+        col.operator("render.cube_map_setup", text="Cube Map Reset", icon="X").action='RESET'
 
 
 # ############################################################
@@ -330,6 +418,11 @@ class CubeMapInfo(bpy.types.PropertyGroup):
             default=False,
             )
 
+    is_enabled = bpy.props.BoolProperty(
+            name="Enabled",
+            default=False,
+            )
+
 
 # ############################################################
 # Un/Registration
@@ -337,6 +430,7 @@ class CubeMapInfo(bpy.types.PropertyGroup):
 
 def register():
     bpy.utils.register_class(CubeMapInfo)
+    bpy.utils.register_class(CubeMapSetup)
 
     bpy.types.Scene.cube_map = bpy.props.PointerProperty(
             name="cube_map",
@@ -359,6 +453,7 @@ def unregister():
     del bpy.types.Scene.cube_map
     bpy.utils.unregister_class(CubeMapInfo)
     bpy.utils.unregister_class(HashInfo)
+    bpy.utils.unregister_class(CubeMapSetup)
 
     bpy.app.handlers.render_init.remove(cube_map_render_init)
     bpy.app.handlers.render_pre.remove(cube_map_render_pre)
