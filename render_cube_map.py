@@ -130,6 +130,9 @@ class View:
         scene.name = self._name
         self._scene = scene
 
+        scene.cube_map.use_cube_map = False
+        scene.render.use_compositing = False
+
     def setNode(self, node, links, node_output):
         node.name = self._name
         node.label = self._name
@@ -202,7 +205,6 @@ def cube_map_render_init(scene, use_force=False):
 
         # mark the scene to remove it afterwards
         scene.cube_map.is_temporary = True
-        scene.cube_map.use_cube_map = False
 
         hashes.append(hash(scene))
         view.setScene(scene)
