@@ -172,7 +172,7 @@ class View:
 
 
 @persistent
-def cube_map_render_init(scene):
+def cube_map_render_init(scene, use_force=False):
     """
     setup the cube map settings for all the render frames
     """
@@ -180,7 +180,7 @@ def cube_map_render_init(scene):
     from math import pi
     half_pi = pi * 0.5
 
-    if not scene.cube_map.use_cube_map:
+    if not (scene.cube_map.use_cube_map or use_force):
         return
 
     main_scene = scene
@@ -202,6 +202,7 @@ def cube_map_render_init(scene):
 
         # mark the scene to remove it afterwards
         scene.cube_map.is_temporary = True
+        scene.cube_map.use_cube_map = False
 
         hashes.append(hash(scene))
         view.setScene(scene)
@@ -230,8 +231,8 @@ def cube_map_render_init(scene):
 # ############################################################
 
 @persistent
-def cube_map_render_pre(scene):
-    if not scene.cube_map.use_cube_map:
+def cube_map_render_pre(scene, use_force=False):
+    if not (scene.cube_map.use_cube_map or use_force):
         return
 
     from math import radians
@@ -256,8 +257,8 @@ def cube_map_render_pre(scene):
 
 
 @persistent
-def cube_map_render_post(scene):
-    if not scene.cube_map.use_cube_map:
+def cube_map_render_post(scene, use_force=False):
+    if not (scene.cube_map.use_cube_map or use_force):
         return
 
     views = bpy.cube_map_views
@@ -280,11 +281,11 @@ def cube_map_render_complete(scene):
     cube_map_cleanup(scene)
 
 
-def cube_map_cleanup(scene):
+def cube_map_cleanup(scene, use_force=False):
     """
     remove all the temporary data created for the cube map
     """
-    if not scene.cube_map.use_cube_map:
+    if not (scene.cube_map.use_cube_map or use_force):
         return
 
     bpy.cube_map_node_tree_data.cleanupScene()
@@ -333,26 +334,18 @@ class CubeMapSetup(bpy.types.Operator):
         cube_map = scene.cube_map
         cube_map.is_enabled = True
 
-        use_cube_map = cube_map.use_cube_map
-        cube_map.use_cube_map = True
+        cube_map_render_init(scene, use_force=True)
+        cube_map_render_pre(scene, use_force=True)
 
-        cube_map_render_init(scene)
-        cube_map_render_pre(scene)
-
-        cube_map.use_cube_map = use_cube_map
+        # set initial scene back as the main scene
         window.screen.scene = scene
 
     def reset(self, scene):
         cube_map = scene.cube_map
         cube_map.is_enabled = False
 
-        use_cube_map = cube_map.use_cube_map
-        cube_map.use_cube_map = True
-
-        cube_map_render_post(scene)
-        cube_map_cleanup(scene)
-
-        cube_map.use_cube_map = use_cube_map
+        cube_map_render_post(scene, use_force=True)
+        cube_map_cleanup(scene, use_force=True)
 
     def invoke(self, context, event):
         scene = context.scene
