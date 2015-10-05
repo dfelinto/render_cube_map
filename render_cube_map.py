@@ -133,6 +133,19 @@ class View:
         scene.cube_map.use_cube_map = False
         scene.render.use_compositing = False
 
+        self._setFilepath()
+
+    def _setFilepath(self):
+        import os
+
+        filepath = self._scene.render.filepath
+
+        dirname = os.path.dirname(filepath)
+        basename = os.path.basename(filepath)
+
+        path = os.path.join(dirname, "{0}{1}".format(self._name, basename))
+        self._scene.render.filepath = path
+
     def setNode(self, node, links, node_output):
         node.name = self._name
         node.label = self._name
