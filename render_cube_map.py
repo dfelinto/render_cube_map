@@ -187,12 +187,12 @@ def cube_map_render_init(scene, use_force=False):
     hashes = [hash(scene) for scene in bpy.data.scenes]
 
     views = [
-            View('NORTH',  Euler((half_pi, 0.0,  0.0))),
-            View('SOUTH',  Euler((half_pi, 0.0, pi))),
-            View('WEST',   Euler((half_pi, 0.0, half_pi))),
-            View('EAST',   Euler((half_pi, 0.0, -half_pi))),
-            View('ZENITH', Euler((pi, 0.0, 0.0))),
-            View('NADIR',  Euler((0.0, 0.0, 0.0))),
+            View('NORTH_',  Euler((half_pi, 0.0,  0.0))),
+            View('SOUTH_',  Euler((half_pi, 0.0, pi))),
+            View('WEST_',   Euler((half_pi, 0.0, half_pi))),
+            View('EAST_',   Euler((half_pi, 0.0, -half_pi))),
+            View('ZENITH_', Euler((pi, 0.0, 0.0))),
+            View('NADIR_',  Euler((0.0, 0.0, 0.0))),
             ]
 
     for view in views:
