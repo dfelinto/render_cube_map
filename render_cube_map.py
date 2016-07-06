@@ -320,7 +320,11 @@ def cube_map_post_update_cleanup(scene):
         bpy.app.handlers.scene_update_post.remove(cube_map_post_update_cleanup)
 
     else:
-        bpy.data.scenes.remove(scenes_temp[0])
+        try:
+            bpy.data.scenes.remove(scenes_temp[0], do_unlink=True)
+        except TypeError:
+            print("Using old Blender, carrying on ...")
+            bpy.data.scenes.remove(scenes_temp[0])
 
 # ############################################################
 # Setup Operator
