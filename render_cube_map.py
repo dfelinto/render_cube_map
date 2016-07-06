@@ -464,7 +464,6 @@ def unregister():
 
     del bpy.types.Scene.cube_map
     bpy.utils.unregister_class(CubeMapInfo)
-    bpy.utils.unregister_class(HashInfo)
     bpy.utils.unregister_class(CubeMapSetup)
 
     bpy.app.handlers.render_init.remove(cube_map_render_init)
