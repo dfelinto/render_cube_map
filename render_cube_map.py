@@ -60,6 +60,20 @@ bl_info = {
 
 
 # ############################################################
+# Global Check
+# ############################################################
+
+def do_run(cube_map, use_force):
+    if not (cube_map.use_cube_map or use_force):
+        return False
+
+    if cube_map.is_enabled and not use_force:
+        return False
+
+    return True
+
+
+# ############################################################
 # Callbacks
 # ############################################################
 
@@ -211,7 +225,8 @@ def cube_map_render_init(scene, use_force=False):
     half_pi = pi * 0.5
 
     cube_map = scene.cube_map
-    if not (cube_map.use_cube_map or use_force):
+
+    if not do_run(cube_map, use_force):
         return
 
     main_scene = scene
@@ -292,7 +307,8 @@ def cube_map_render_init(scene, use_force=False):
 
 @persistent
 def cube_map_render_pre(scene, use_force=False):
-    if not (scene.cube_map.use_cube_map or use_force):
+
+    if not do_run(scene.cube_map, use_force):
         return
 
     from math import radians
@@ -318,7 +334,8 @@ def cube_map_render_pre(scene, use_force=False):
 
 @persistent
 def cube_map_render_post(scene, use_force=False):
-    if not (scene.cube_map.use_cube_map or use_force):
+
+    if not do_run(scene.cube_map, use_force):
         return
 
     views = bpy.cube_map_views
@@ -345,7 +362,8 @@ def cube_map_cleanup(scene, use_force=False):
     """
     remove all the temporary data created for the cube map
     """
-    if not (scene.cube_map.use_cube_map or use_force):
+
+    if not do_run(scene.cube_map, use_force):
         return
 
     bpy.cube_map_node_tree_data.cleanupScene()
