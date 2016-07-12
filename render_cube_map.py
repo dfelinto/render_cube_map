@@ -1,4 +1,4 @@
-#====================== BEGIN GPL LICENSE BLOCK ======================
+# ====================== BEGIN GPL LICENSE BLOCK ======================
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License
@@ -14,7 +14,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
-#======================= END GPL LICENSE BLOCK ========================
+# ======================= END GPL LICENSE BLOCK ========================
 
 # <pep8 compliant>
 
@@ -33,6 +33,19 @@
 # Rio de Janeiro, July 2016
 # ########################################
 
+import bpy
+
+from bpy.app.handlers import persistent
+
+from bpy.types import (
+        Operator,
+        Panel,
+        )
+
+from bpy.props import (
+        BoolProperty,
+        )
+
 bl_info = {
     "name": "Cube Map",
     "author": "Dalai Felinto",
@@ -44,19 +57,6 @@ bl_info = {
     "wiki_url": "https://github.com/dfelinto/render_cube_map",
     "tracker_url": "",
     "category": "Render"}
-
-
-import bpy
-from bpy.app.handlers import persistent
-
-from bpy.types import (
-        Operator,
-        Panel,
-        )
-
-from bpy.props import (
-        BoolProperty,
-        )
 
 
 # ############################################################
@@ -218,20 +218,48 @@ def cube_map_render_init(scene, use_force=False):
     hashes = [hash(scene) for scene in bpy.data.scenes]
 
     views_raw = (
-            ('NORTH_',  Euler((half_pi, 0.0,  0.0)), cube_map.use_view_north),
-            ('SOUTH_',  Euler((half_pi, 0.0, pi)), cube_map.use_view_south),
-            ('WEST_',   Euler((half_pi, 0.0, half_pi)), cube_map.use_view_west),
-            ('EAST_',   Euler((half_pi, 0.0, -half_pi)), cube_map.use_view_east),
-            ('ZENITH_', Euler((pi, 0.0, 0.0)), cube_map.use_view_zenith),
-            ('NADIR_',  Euler((0.0, 0.0, 0.0)), cube_map.use_view_nadir),
+            (
+                'NORTH_',
+                Euler((half_pi, 0.0,  0.0)),
+                cube_map.use_view_north,
+                ),
+            (
+                'SOUTH_',
+                Euler((half_pi, 0.0, pi)),
+                cube_map.use_view_south,
+                ),
+            (
+                'WEST_',
+                Euler((half_pi, 0.0, half_pi)),
+                cube_map.use_view_west,
+                ),
+            (
+                'EAST_',
+                Euler((half_pi, 0.0, -half_pi)),
+                cube_map.use_view_east,
+                ),
+            (
+                'ZENITH_',
+                Euler((pi, 0.0, 0.0)),
+                cube_map.use_view_zenith,
+                ),
+            (
+                'NADIR_',
+                Euler((0.0, 0.0, 0.0)),
+                cube_map.use_view_nadir,
+                ),
             )
 
-    views = [View(name, euler) for (name, euler, use) in views_raw if use or not cube_map.is_advanced]
+    views = [
+            View(name, euler) for (name, euler, use) in views_raw
+            if use or not cube_map.is_advanced]
 
     for view in views:
         # create a scene per view
         bpy.ops.scene.new(type='LINK_OBJECTS')
-        scene = [scene for scene in bpy.data.scenes if hash(scene) not in hashes][0]
+        scene = [
+                scene for scene in bpy.data.scenes if
+                hash(scene) not in hashes][0]
 
         # mark the scene to remove it afterwards
         scene.cube_map.is_temporary = True
@@ -274,7 +302,7 @@ def cube_map_render_pre(scene, use_force=False):
 
     data.lens_unit = 'FOV'
     data.angle = radians(90)
-    data.type='PERSP'
+    data.type = 'PERSP'
 
     mat = camera.matrix_world
 
@@ -331,7 +359,9 @@ def cube_map_post_update_cleanup(scene):
     """
     delay removal of scenes (otherwise we get a crash)
     """
-    scenes_temp = [scene for scene in bpy.data.scenes if scene.cube_map.is_temporary]
+    scenes_temp = [
+            scene for scene in bpy.data.scenes if
+            scene.cube_map.is_temporary]
 
     if not scenes_temp:
         bpy.app.handlers.scene_update_post.remove(cube_map_post_update_cleanup)
@@ -394,7 +424,11 @@ class CubeMapSetup(Operator):
 
             if is_enabled:
                 if cube_map.is_temporary:
-                    self.report({'ERROR'}, "Cannot reset cube map from one of the created scenes")
+                    self.report(
+                            {'ERROR'},
+                            "Cannot reset cube map from one of "
+                            "the created scenes")
+
                     return {'CANCELLED'}
                 else:
                     self.reset(scene)
@@ -403,7 +437,7 @@ class CubeMapSetup(Operator):
                 self.report({'ERROR'}, "Cube Map render is not setup")
                 return {'CANCELLED'}
 
-        else: # SETUP
+        else:  # SETUP
             if is_enabled:
                 self.report({'ERROR'}, "Cube Map render is already setup")
                 return {'CANCELLED'}
@@ -439,9 +473,13 @@ class RENDER_PT_cube_map(Panel):
         cube_map = scene.cube_map
 
         if not cube_map.is_enabled:
-            col.operator("render.cube_map_setup", text="Scene Setup").action='SETUP'
+            col.operator(
+                    "render.cube_map_setup",
+                    text="Scene Setup").action = 'SETUP'
         else:
-            col.operator("render.cube_map_setup", text="Scene Reset", icon="X").action='RESET'
+            col.operator(
+                    "render.cube_map_setup",
+                    text="Scene Reset", icon="X").action = 'RESET'
 
         col = layout.column()
         col.active = cube_map.use_cube_map
