@@ -32,7 +32,7 @@ bl_info = {
     "name": "Cube Map",
     "author": "Dalai Felinto",
     "version": (1, 0),
-    "blender": (2, 7, 5),
+    "blender": (2, 7, 7),
     "location": "Render Panel",
     "description": "",
     "warning": "",
@@ -43,6 +43,11 @@ bl_info = {
 
 import bpy
 from bpy.app.handlers import persistent
+
+from bpy.types import (
+        Operator,
+        Panel,
+        )
 
 
 # ############################################################
@@ -326,11 +331,12 @@ def cube_map_post_update_cleanup(scene):
             print("Using old Blender, carrying on ...")
             bpy.data.scenes.remove(scenes_temp[0])
 
+
 # ############################################################
 # Setup Operator
 # ############################################################
 
-class CubeMapSetup(bpy.types.Operator):
+class CubeMapSetup(Operator):
     """"""
     bl_idname = "render.cube_map_setup"
     bl_label = "Cube Map Render Setup"
@@ -400,19 +406,36 @@ class CubeMapSetup(bpy.types.Operator):
 # User Interface
 # ############################################################
 
-def RENDER_PT_cube_map(self, context):
-    scene = context.scene
-    cube_map = scene.cube_map
+class RENDER_PT_cube_map(Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "render"
+    bl_label = "Cube Map"
+    COMPAT_ENGINES = {'BLENDER_RENDER'}
 
-    col = self.layout.column()
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        return scene and (scene.render.engine in cls.COMPAT_ENGINES)
 
-    col.prop(scene.cube_map, "use_cube_map")
-    col.separator()
+    def draw_header(self, context):
+        self.layout.prop(context.scene.cube_map, "use_cube_map", text="")
 
-    if not cube_map.is_enabled:
-        col.operator("render.cube_map_setup", text="Cube Map Setup").action='SETUP'
-    else:
-        col.operator("render.cube_map_setup", text="Cube Map Reset", icon="X").action='RESET'
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+
+        scene = context.scene
+        cube_map = scene.cube_map
+
+        if not cube_map.is_enabled:
+            col.operator("render.cube_map_setup", text="Cube Map Setup").action='SETUP'
+        else:
+            col.operator("render.cube_map_setup", text="Cube Map Reset", icon="X").action='RESET'
+
+        col = layout.column()
+        col.active = cube_map.use_cube_map
+        #col.label(text="WIP")
 
 
 # ############################################################
@@ -443,12 +466,13 @@ class CubeMapInfo(bpy.types.PropertyGroup):
 def register():
     bpy.utils.register_class(CubeMapInfo)
     bpy.utils.register_class(CubeMapSetup)
-
     bpy.types.Scene.cube_map = bpy.props.PointerProperty(
             name="cube_map",
             type=CubeMapInfo,
             options={'HIDDEN'},
             )
+
+    bpy.utils.register_class(RENDER_PT_cube_map)
 
     bpy.app.handlers.render_init.append(cube_map_render_init)
     bpy.app.handlers.render_pre.append(cube_map_render_pre)
@@ -456,21 +480,19 @@ def register():
     bpy.app.handlers.render_cancel.append(cube_map_render_cancel)
     bpy.app.handlers.render_complete.append(cube_map_render_complete)
 
-    bpy.types.RENDER_PT_render.append(RENDER_PT_cube_map)
-
 
 def unregister():
-    bpy.types.RENDER_PT_render.remove(RENDER_PT_cube_map)
-
-    del bpy.types.Scene.cube_map
     bpy.utils.unregister_class(CubeMapInfo)
     bpy.utils.unregister_class(CubeMapSetup)
+    bpy.utils.unregister_class(RENDER_PT_cube_map)
 
     bpy.app.handlers.render_init.remove(cube_map_render_init)
     bpy.app.handlers.render_pre.remove(cube_map_render_pre)
     bpy.app.handlers.render_post.remove(cube_map_render_post)
     bpy.app.handlers.render_cancel.remove(cube_map_render_cancel)
     bpy.app.handlers.render_complete.remove(cube_map_render_complete)
+
+    del bpy.types.Scene.cube_map
 
 
 if __name__ == '__main__':
