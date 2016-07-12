@@ -391,8 +391,6 @@ class CubeMapSetup(Operator):
         is_enabled = cube_map.is_enabled
 
         if self.action == 'RESET':
-            self.report({'ERROR'}, "Option temporarilly disabled")
-            return {'CANCELLED'}
 
             if is_enabled:
                 if cube_map.is_temporary:
@@ -441,9 +439,9 @@ class RENDER_PT_cube_map(Panel):
         cube_map = scene.cube_map
 
         if not cube_map.is_enabled:
-            col.operator("render.cube_map_setup", text="Cube Map Setup").action='SETUP'
+            col.operator("render.cube_map_setup", text="Scene Setup").action='SETUP'
         else:
-            col.operator("render.cube_map_setup", text="Cube Map Reset", icon="X").action='RESET'
+            col.operator("render.cube_map_setup", text="Scene Reset", icon="X").action='RESET'
 
         col = layout.column()
         col.active = cube_map.use_cube_map
