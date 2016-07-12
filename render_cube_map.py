@@ -22,10 +22,15 @@
 # Render Cube Map
 #
 # Dalai Felinto
+# --
+# blendernetwork.org/dalai-felinto
+# www.dalaifelinto.com
 #
-# dalaifelinto.com
+# Original code:
 # Rio de Janeiro, September 2015
 #
+# Latest update:
+# Rio de Janeiro, July 2016
 # ########################################
 
 bl_info = {
@@ -435,7 +440,7 @@ class RENDER_PT_cube_map(Panel):
 
         col = layout.column()
         col.active = cube_map.use_cube_map
-        #col.label(text="WIP")
+        col.label(text="WIP")
 
 
 # ############################################################
