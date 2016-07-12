@@ -54,6 +54,10 @@ from bpy.types import (
         Panel,
         )
 
+from bpy.props import (
+        BoolProperty,
+        )
+
 
 # ############################################################
 # Callbacks
@@ -206,20 +210,23 @@ def cube_map_render_init(scene, use_force=False):
     from math import pi
     half_pi = pi * 0.5
 
-    if not (scene.cube_map.use_cube_map or use_force):
+    cube_map = scene.cube_map
+    if not (cube_map.use_cube_map or use_force):
         return
 
     main_scene = scene
     hashes = [hash(scene) for scene in bpy.data.scenes]
 
-    views = [
-            View('NORTH_',  Euler((half_pi, 0.0,  0.0))),
-            View('SOUTH_',  Euler((half_pi, 0.0, pi))),
-            View('WEST_',   Euler((half_pi, 0.0, half_pi))),
-            View('EAST_',   Euler((half_pi, 0.0, -half_pi))),
-            View('ZENITH_', Euler((pi, 0.0, 0.0))),
-            View('NADIR_',  Euler((0.0, 0.0, 0.0))),
-            ]
+    views_raw = (
+            ('NORTH_',  Euler((half_pi, 0.0,  0.0)), cube_map.use_view_north),
+            ('SOUTH_',  Euler((half_pi, 0.0, pi)), cube_map.use_view_south),
+            ('WEST_',   Euler((half_pi, 0.0, half_pi)), cube_map.use_view_west),
+            ('EAST_',   Euler((half_pi, 0.0, -half_pi)), cube_map.use_view_east),
+            ('ZENITH_', Euler((pi, 0.0, 0.0)), cube_map.use_view_zenith),
+            ('NADIR_',  Euler((0.0, 0.0, 0.0)), cube_map.use_view_nadir),
+            )
+
+    views = [View(name, euler) for (name, euler, use) in views_raw if use or not cube_map.is_advanced]
 
     for view in views:
         # create a scene per view
@@ -440,7 +447,19 @@ class RENDER_PT_cube_map(Panel):
 
         col = layout.column()
         col.active = cube_map.use_cube_map
-        col.label(text="WIP")
+        col.prop(cube_map, "is_advanced")
+        if cube_map.is_advanced:
+            box = col.box()
+            box.active = cube_map.use_cube_map and cube_map.is_advanced
+            row = box.row()
+            row.prop(cube_map, "use_view_north")
+            row.prop(cube_map, "use_view_west")
+            row.prop(cube_map, "use_view_zenith")
+
+            row = box.row()
+            row.prop(cube_map, "use_view_south")
+            row.prop(cube_map, "use_view_east")
+            row.prop(cube_map, "use_view_nadir")
 
 
 # ############################################################
@@ -448,19 +467,56 @@ class RENDER_PT_cube_map(Panel):
 # ############################################################
 
 class CubeMapInfo(bpy.types.PropertyGroup):
-    use_cube_map = bpy.props.BoolProperty(
+    use_cube_map = BoolProperty(
             name="Cube Map",
             default=False,
             )
 
-    is_temporary = bpy.props.BoolProperty(
+    is_temporary = BoolProperty(
             name="Temporary",
             default=False,
             )
 
-    is_enabled = bpy.props.BoolProperty(
+    is_enabled = BoolProperty(
             name="Enabled",
             default=False,
+            )
+
+    # per view settings
+    is_advanced = BoolProperty(
+            name="Advanced",
+            default=False,
+            description="Decide which views to render",
+            )
+
+    use_view_north = BoolProperty(
+            name="North",
+            default=True,
+            )
+
+    use_view_south = BoolProperty(
+            name="South",
+            default=True,
+            )
+
+    use_view_west = BoolProperty(
+            name="West",
+            default=True,
+            )
+
+    use_view_east = BoolProperty(
+            name="East",
+            default=True,
+            )
+
+    use_view_zenith = BoolProperty(
+            name="Zenith",
+            default=True,
+            )
+
+    use_view_nadir = BoolProperty(
+            name="Nadir",
+            default=True,
             )
 
 
