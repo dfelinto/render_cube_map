@@ -11,6 +11,12 @@ How to Use
 
 Each face of the cube map is saved separately in your output folder.
 
+Scene Setup
+===========
+If you need to save the cubemap setup within the .blend file you can use this option.
+This is useful to send the file for renderfarms. Once your scene is setup you no longer
+need the "Cube Map" option enabled nor this addon.
+
 Advanced Mode
 =============
 If you need to (re-)render only some of the cube-map views you can turn
