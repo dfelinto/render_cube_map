@@ -109,7 +109,7 @@ class NodeTree:
 
     def _cleanNodes(self):
         """
-        remote all the nodes created temporarily
+        remove all the nodes created temporarily
         """
         nodes = self._scene.node_tree.nodes
         to_del = []
