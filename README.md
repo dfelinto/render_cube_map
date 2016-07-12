@@ -4,12 +4,19 @@ Addon to automatically render cube maps from Blender
 How to Use
 ==========
 * Install and enable the [Addon](render_cube_map.py)
-* Turn the Cube Map option in the ``Render`` tab in the ``Render`` panel.
+* Turn the Cube Map option in the ``Cube Map`` tab in the ``Render`` panel.
 * Render your frame or animation, as you would normally
 
 ![Cube Map Addon](http://dalaifelinto.com/images/cube_map.png)
 
 Each face of the cube map is saved separately in your output folder.
+
+Advanced Mode
+=============
+If you need to (re-)render only some of the cube-map views you can turn
+the ``Advanced`` option and select the views to render.
+
+If ``Advanced`` is disabled all the views are rendered.
 
 What is happening under the hood?
 =================================
