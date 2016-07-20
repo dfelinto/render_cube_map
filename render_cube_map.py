@@ -473,12 +473,11 @@ class RENDER_PT_cube_map(Panel):
     bl_region_type = 'WINDOW'
     bl_context = "render"
     bl_label = "Cube Map"
-    COMPAT_ENGINES = {'BLENDER_RENDER'}
 
     @classmethod
     def poll(cls, context):
         scene = context.scene
-        return scene and (scene.render.engine in cls.COMPAT_ENGINES)
+        return scene and (scene.render.engine != 'BLENDER_GAME')
 
     def draw_header(self, context):
         self.layout.prop(context.scene.cube_map, "use_cube_map", text="")
