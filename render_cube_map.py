@@ -47,7 +47,7 @@ bl_info = {
     "name": "Cube Map",
     "author": "Dalai Felinto",
     "version": (1, 0),
-    "blender": (2, 7, 7),
+    "blender": (3, 6, 0),
     "location": "Render Panel",
     "description": "",
     "warning": "",
@@ -187,7 +187,7 @@ class View:
         self._scene_camera = self._scene.camera
 
         self._camera = bpy.data.objects.new(self._name, data)
-        self._scene.objects.link(self._camera)
+        self._scene.collection.objects.link(self._camera)
 
         rotation = self._euler_rotation.copy()
         rotation.z += zed
@@ -199,7 +199,7 @@ class View:
         self._scene.camera = self._camera
 
     def resetCamera(self):
-        self._scene.objects.unlink(self._camera)
+        self._scene.collection.objects.unlink(self._camera)
         bpy.data.objects.remove(self._camera)
         self._camera = None
 
@@ -268,7 +268,7 @@ def cube_map_render_init(scene, use_force=False):
 
     for view in views:
         # create a scene per view
-        bpy.ops.scene.new(type='LINK_OBJECTS')
+        bpy.ops.scene.new(type='LINK_COPY')
         scene = [
                 scene for scene in bpy.data.scenes if
                 hash(scene) not in hashes][0]
@@ -367,7 +367,7 @@ def cube_map_cleanup(scene, use_force=False):
     del bpy.cube_map_node_tree_data
     del bpy.cube_map_views
 
-    bpy.app.handlers.scene_update_post.append(cube_map_post_update_cleanup)
+    bpy.app.handlers.depsgraph_update_post.append(cube_map_post_update_cleanup)
 
 
 def cube_map_post_update_cleanup(scene):
@@ -379,7 +379,7 @@ def cube_map_post_update_cleanup(scene):
             scene.cube_map.is_temporary]
 
     if not scenes_temp:
-        bpy.app.handlers.scene_update_post.remove(cube_map_post_update_cleanup)
+        bpy.app.handlers.depsgraph_update_post.remove(cube_map_post_update_cleanup)
 
     else:
         scenes_temp[0].user_clear()
@@ -400,7 +400,7 @@ class CubeMapSetup(Operator):
     bl_label = "Cube Map Render Setup"
     bl_description = ""
 
-    action = bpy.props.EnumProperty(
+    action: bpy.props.EnumProperty(
         description="",
         items=(("SETUP", "Setup", "Created linked scenes and setup cube map"),
                ("RESET", "Reset", "Delete added scenes"),
@@ -421,7 +421,7 @@ class CubeMapSetup(Operator):
         cube_map_render_pre(scene, use_force=True)
 
         # set initial scene back as the main scene
-        window.screen.scene = scene
+        window.scene = scene
 
     def reset(self, scene):
         cube_map = scene.cube_map
@@ -518,54 +518,54 @@ class RENDER_PT_cube_map(Panel):
 # ############################################################
 
 class CubeMapInfo(bpy.types.PropertyGroup):
-    use_cube_map = BoolProperty(
+    use_cube_map: BoolProperty(
             name="Cube Map",
             default=False,
             )
 
-    is_temporary = BoolProperty(
+    is_temporary: BoolProperty(
             name="Temporary",
             default=False,
             )
 
-    is_enabled = BoolProperty(
+    is_enabled: BoolProperty(
             name="Enabled",
             default=False,
             )
 
     # per view settings
-    is_advanced = BoolProperty(
+    is_advanced: BoolProperty(
             name="Advanced",
             default=False,
             description="Decide which views to render",
             )
 
-    use_view_north = BoolProperty(
+    use_view_north: BoolProperty(
             name="North",
             default=True,
             )
 
-    use_view_south = BoolProperty(
+    use_view_south: BoolProperty(
             name="South",
             default=True,
             )
 
-    use_view_west = BoolProperty(
+    use_view_west: BoolProperty(
             name="West",
             default=True,
             )
 
-    use_view_east = BoolProperty(
+    use_view_east: BoolProperty(
             name="East",
             default=True,
             )
 
-    use_view_zenith = BoolProperty(
+    use_view_zenith: BoolProperty(
             name="Zenith",
             default=True,
             )
 
-    use_view_nadir = BoolProperty(
+    use_view_nadir: BoolProperty(
             name="Nadir",
             default=True,
             )
