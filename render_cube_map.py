@@ -22,15 +22,12 @@
 # Render Cube Map
 #
 # Dalai Felinto
-# --
-# blendernetwork.org/dalai-felinto
-# www.dalaifelinto.com
 #
 # Original code:
 # Rio de Janeiro, September 2015
 #
 # Latest update:
-# Rio de Janeiro, July 2016
+# Amsterdam, August 17 2023
 # ########################################
 
 import bpy
